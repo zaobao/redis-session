@@ -89,12 +89,13 @@ function getSession(create, callback) {
 }
 
 function setSession(session) {
+  var sname = this.sessionOptions.sname;
   var redisPool = this.sessionRedisPool;
   var maxAge = this.sessionOptions.maxAge;
   var secure = this.sessionOptions.secure ? "; Secure" : "";
   var httpOnly = this.sessionOptions.httpOnly ? "; HttpOnly" : "";
   this.session = session;
-  this.setHeader("Set-Cookie" , "sessionId=" + this.session.id + "; Path=/"
+  this.setHeader("Set-Cookie" , sname + "=" + this.session.id + "; Path=/"
   + secure
   + httpOnly + "; Max-Age=" + maxAge);
   if (session.ifModified === true) {
@@ -119,6 +120,9 @@ function useSession(request, response, sessionRedisPool, options) {
   sessionOptions.maxAge = 600;
   sessionOptions.secure = false;
   if (options != undefined) {
+    if (options.hasOwnProperty("sname")) {
+      sessionOptions.sname = options.sname;
+    };
     if (options.hasOwnProperty("slength")) {
       sessionOptions.slength = options.slength;
     };
