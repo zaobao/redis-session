@@ -1,28 +1,3 @@
-var poolModule = require("generic-pool");
-var redis = require("redis");
-
-var redisPool = poolModule.Pool({
-  name: "redis",
-  create: function (callback) {
-    var client = redis.createClient(6379, "127.0.0.1");
-    client.select("1");
-    client.on("error", function (err) {
-        console.log("Error " + err);
-    });
-    client.auth("xxxxxxxx");
-    callback(null, client);
-  },
-  destroy: function (client) {
-    client.quit();
-  },
-  max: 1000,
-  min: 1,
-  idleTimeoutMillis: 180000,
-  log: false,
-  priorityRange: 3
-  }
-);
-
 function Session() {
   this.storage = {};
   this.ifModified = false;
@@ -55,6 +30,9 @@ Session.prototype.destroy = destroySession;
 function getSession(create, callback) {
   var session = this.session;
   var id;
+  var redisPool = this.sessionRedisPool;
+  var length = this.sessionOptions.slength;
+  var maxAge = this.sessionOptions.maxAge;
   function randomChar(l) {
     var x="123456789poiuytrewqasdfghjklmnbvcxzQWERTYUIPLKJHGFDSAZXCVBNM";
     var tmp="";
@@ -64,13 +42,12 @@ function getSession(create, callback) {
     return tmp;
   }
   function createSession(client) {
-    var id = randomChar(36);
+    var id = randomChar(length);
     client.hsetnx(id, "id", id, function (err, reply) {
-      console.log(id);
       if (reply === 0) {
         createSession(client);
       } else if (reply === 1) {
-        client.expire(id, 600, function (err, reply) {
+        client.expire(id, maxAge, function (err, reply) {
           redisPool.release(client);
         });
         session.id = id;
@@ -83,12 +60,12 @@ function getSession(create, callback) {
       }
     });
   }
-  if (typeof(this.cookie.sessionId) === "string") {
-    id = this.cookie.sessionId;
+  if (typeof(this.cookie[this.sessionOptions.sname]) === "string") {
+    id = this.cookie[this.sessionOptions.sname];
     redisPool.acquire(function (err, client) {
       client.hgetall(id, function (err, reply) {
         if (reply != undefined) {
-          client.expire(id, 600, function (err, reply) {
+          client.expire(id, maxAge, function (err, reply) {
             redisPool.release(client);
           });
           session.id = id;
@@ -112,16 +89,20 @@ function getSession(create, callback) {
 }
 
 function setSession(session) {
+  var redisPool = this.sessionRedisPool;
+  var maxAge = this.sessionOptions.maxAge;
+  var secure = this.sessionOptions.secure ? "; Secure" : "";
+  var httpOnly = this.sessionOptions.httpOnly ? "; HttpOnly" : "";
   this.session = session;
   this.setHeader("Set-Cookie" , "sessionId=" + this.session.id + "; Path=/"
-  //+ "; Secure"
-  + "; HttpOnly" + "; Max-Age=600");
+  + secure
+  + httpOnly + "; Max-Age=" + maxAge);
   if (session.ifModified === true) {
     redisPool.acquire(function (err, client) {
       client.multi ([
         ["del", session.id],
         ["hmset", session.id, session.storage],
-        ["expire", session.id, 600]
+        ["expire", session.id, maxAge]
       ]).exec(function (err, reply) {
         redisPool.release(client);
       });
@@ -129,17 +110,42 @@ function setSession(session) {
   }
 }
 
-function useSession(request, response) {
+function useSession(request, response, sessionRedisPool, options) {
   var session = new Session;
+  var sessionOptions = {};
+  sessionOptions.sname = "sessionId";
+  sessionOptions.slength = 36;
+  sessionOptions.httpOnly = true;
+  sessionOptions.maxAge = 600;
+  sessionOptions.secure = false;
+  if (options != undefined) {
+    if (options.hasOwnProperty("slength")) {
+      sessionOptions.slength = options.slength;
+    };
+    if (options.hasOwnProperty("httpOnly")) {
+      sessionOptions.httpOnly = options.httpOnly;
+    };
+    if (options.hasOwnProperty("maxAge")) {
+      sessionOptions.maxAge = options.maxAge;
+    };
+    if (options.hasOwnProperty("secure")) {
+      sessionOptions.secure = options.secure;
+    };
+  }
   request.session = session;
+  request.sessionRedisPool = sessionRedisPool;
+  request.sessionOptions = sessionOptions;
+  request.sessionRedisPool = sessionRedisPool;
   response.session = session;
+  response.sessionRedisPool = sessionRedisPool;
+  response.sessionOptions = sessionOptions;
+  response.sessionRedisPool = sessionRedisPool;
   request.getSession = getSession;
   response.setSession = setSession;
   response.endWithSession = function (a1, a2) {
-    console.log(this.session);
     this.setSession(this.session);
     this.end(a1, a2);
   }
 }
 
-exports.useSession = useSession
+exports.useSession = useSession;
