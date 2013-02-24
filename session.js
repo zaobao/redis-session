@@ -13,11 +13,13 @@ function setAttributeByName(attrName, attrVal) {
 };
 function destroySession(callback) {
   session = this;
+  var id = session.id;
+  var redisPool = this.redisPool;
   session.id = undefined;
   session.storage = {};
   session.ifModified = false;
   redisPool.acquire(function(err, client) {
-    client.hdel(session.id,function (err, reply) {
+    client.del(id,function (err, reply) {
       redisPool.release(client);
       callback();
     });
@@ -136,6 +138,7 @@ function useSession(request, response, sessionRedisPool, options) {
       sessionOptions.secure = options.secure;
     };
   }
+  session.redisPool = sessionRedisPool;
   request.session = session;
   request.sessionRedisPool = sessionRedisPool;
   request.sessionOptions = sessionOptions;
