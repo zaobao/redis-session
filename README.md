@@ -73,7 +73,7 @@ Invalid the session.
 
 ##response
 ###endWithSession()
-You must use this function instead of `response.end()` to store and refresh the session. The author intends to keep the original interface pure.
+If you want to make your session valid, you'd better use this function instead of `response.end()` to store and refresh the session. If the session has been destroyed, and you do not want a new one, you may also use the end() function. The author intends to keep the original interface pure.
 
 LICENSE
 =======
