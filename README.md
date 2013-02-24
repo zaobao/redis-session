@@ -31,7 +31,7 @@ Then you can use this Module as follows:
     
 This will display "Success! redis-session" in the page.
 
-More examples can be obtained at sample/.
+More samles can be obtained at example/.
 
 APIs
 ====
@@ -40,13 +40,43 @@ You may use this Module by `sessionModule = require("yourpath/session.js")`.
 ##sessionModule
 ###useSession(request, response, redisPool, [options])
 * `redisPool` is a connection pool you may define it with the module "generic-pool".
-* `options` is a object containing the parameters you can set for the session. If you want to set the expiry-time of session, you may define it as `{maxAge: xx}`. The obj can be depicted as:
-    {
+* `options` is a optional argument and a object containing the parameters you can set for the session. If you want to set the expiry-time of session, you may define it as `{maxAge: xx}`. The obj can be depicted as:
+```js
+
+    options {
       sname:        //set the name of the sessionID,          default "sessionId"
-      slength:      //set the length of the sessionID,        default 36
-      httpOnly:     //set the HttpOnly attribute of cookie,   default true
-      secure:       //set the HttpOnly attribute of cookie,   default false
-      maxAge:       //set the expiry-time of session(seconds),default 600
-    }
+      slength:      //set the length of the sessionID,        default 36      
+      httpOnly:     //set the HttpOnly attribute of cookie,   default true      
+      secure:       //set the HttpOnly attribute of cookie,   default false      
+      maxAge:       //set the expiry-time of session(seconds),default 600      
+    }               //you can set one or more of them
 
+##request
+###getSession(create, callback(session))
 
+    request.getSession(true, function(session){
+      //do something with session
+    });
+
+##Session
+###getAttribute(attrName)
+Return the value of the attribute.
+###setAttribute(attrName, attrVal)
+Set the value of the attribute.
+###destroy(callback)
+Invalid the session.
+
+        session.destroy(function () {
+         //the session has been destroyed, you may get a new one
+         request.getSession(true, function (session) {
+          //do something with the new session named also session
+        })
+      });
+
+##response
+###endWithSession()
+You must use this function instead of `response.end()` to store and refresh the session. The author intends to keep the original interface pure.
+
+LICENSE
+=======
+MIT License
