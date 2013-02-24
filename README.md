@@ -1,7 +1,7 @@
 redis-session
 =============
 
-Enable session with redis.
+Enable session with redis and cookie.
 
 Installation
 ============
