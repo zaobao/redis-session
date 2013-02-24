@@ -31,8 +31,6 @@ Then you can use this Module as follows:
     
 This will display "Success! redis-session" in the page.
 
-More samles can be obtained at example/.
-
 APIs
 ====
 You may use this Module by `sessionModule = require("yourpath/session.js")`.
