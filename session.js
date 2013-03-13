@@ -97,7 +97,7 @@ function setSession(session) {
   var secure = this.sessionOptions.secure ? "; Secure" : "";
   var httpOnly = this.sessionOptions.httpOnly ? "; HttpOnly" : "";
   this.session = session;
-  this.setHeader("Set-Cookie" , sname + "=" + this.session.id + "; Path=/"
+  this.writeHeader("Set-Cookie" , sname + "=" + this.session.id + "; Path=/"
   + secure
   + httpOnly + "; Max-Age=" + maxAge);
   if (session.ifModified === true) {
