@@ -97,9 +97,9 @@ function setSession(session) {
   var secure = this.sessionOptions.secure ? "; Secure" : "";
   var httpOnly = this.sessionOptions.httpOnly ? "; HttpOnly" : "";
   this.session = session;
-  this.setHeader("Set-Cookie" , sname + "=" + this.session.id + "; Path=/"
-  + secure
-  + httpOnly + "; Max-Age=" + maxAge);
+  if (this.session.id != undefined)
+    this.setHeader("Set-Cookie" , sname + "=" + this.session.id + "; Path=/"
+    + secure + httpOnly + "; Max-Age=" + maxAge);
   if (session.ifModified === true) {
     redisPool.acquire(function (err, client) {
       client.multi ([
