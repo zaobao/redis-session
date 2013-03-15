@@ -60,7 +60,7 @@ You may use this Module by `sessionModule = require("yourpath/session.js")`.
 ###getAttribute(attrName)
 Return the value of the attribute.
 ###setAttribute(attrName, attrVal)
-Set the value of the attribute.
+Set the value of the attribute. It's possible to delete the attribute with "setAttribute(attrName, undefined)".
 ###destroy(callback)
 Invalid the session.
 
