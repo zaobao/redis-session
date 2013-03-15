@@ -8,6 +8,8 @@ function getAttributeByName(attrName) {
 function setAttributeByName(attrName, attrVal) {
   if (this.storage[attrName] != attrVal) {
     this.storage[attrName] = attrVal;
+    if (attrVal === undefined)
+      delete this.storage[attrName];
     this.ifModified = true;
   }
 };
